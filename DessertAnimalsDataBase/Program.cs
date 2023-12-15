@@ -8,7 +8,10 @@ internal class Program
 {
 	static void Main(string[] args)
 	{
-		IDataAccess db = new SQLiteDataAccess("dessert_animals.db");
+		// Current behavior is to place the database file in the same directory as the executable.
+		// Edit below if you need it placed somewhere else.
+		var pathToDatabase = "dessert_animals.db";
+		IDataAccess db = new SQLiteDataAccess(pathToDatabase);
 		var facade = new DessertAnimalFacade(db);
 		new Menu(facade).Show();
 	}

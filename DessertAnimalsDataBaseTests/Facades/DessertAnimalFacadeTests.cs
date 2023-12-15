@@ -22,7 +22,6 @@ public class DessertAnimalFacadeTests
 	{
 		_mock = new Mock<IDataAccess>();
 		_mock.Setup(x => x.DoNonQuery(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>())).Returns(1).Verifiable();
-		_mock.Setup(x => x.DoQuery(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>())).Returns(new string[][] { new string[] { "1", "Test", "Test" } }).Verifiable();
 		_mockDb = _mock.Object;
 		_subject = new DessertAnimalFacade(_mockDb);
 	}
@@ -33,6 +32,7 @@ public class DessertAnimalFacadeTests
 		_subject.Add(_animals[1]);
 
 		_mock.Verify(x => x.DoNonQuery(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>()), Times.Once);
+		_mock.Verify(x => x.DoNonQuery(It.Is<string>(s => !s.Contains(_animals[1].Name) && s.Contains("INSERT")), It.IsAny<Dictionary<string, string>>()), Times.Once);
 	}
 
 	[TestMethod()]
@@ -41,6 +41,7 @@ public class DessertAnimalFacadeTests
 		_subject.Remove(1);
 
 		_mock.Verify(x => x.DoNonQuery(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>()), Times.Once);
+		_mock.Verify(x => x.DoNonQuery(It.Is<string>(s => !s.Contains(_animals[1].Id.ToString()) && s.Contains("DELETE")), It.IsAny<Dictionary<string, string>>()), Times.Once);
 	}
 
 	[TestMethod()]
@@ -49,19 +50,20 @@ public class DessertAnimalFacadeTests
 		_subject.Update(_animals[1]);
 
 		_mock.Verify(x => x.DoNonQuery(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>()), Times.Once);
+		_mock.Verify(x => x.DoNonQuery(It.Is<string>(s => !s.Contains(_animals[1].Name) && s.Contains("UPDATE")), It.IsAny<Dictionary<string, string>>()), Times.Once);
 	}
 
 	[TestMethod()]
 	public void GetAllTest()
 	{
 		var returnValue = new List<string[]>();
-		_animals.ForEach(a => returnValue.Add(new string[] { a.Id.ToString(), a.Name, a.Description }));
+		_animals.ForEach(a => returnValue.Add([a.Id.ToString(), a.Name, a.Description]));
 		_mock.Setup(x => x.DoQuery(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>())).Returns(returnValue.ToArray()).Verifiable();
 
 		var actual = _subject.GetAll();
 
 		_mock.Verify(x => x.DoQuery(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>()), Times.Once);
-
+		_mock.Verify(x => x.DoQuery(It.Is<string>(s => s.Contains("SELECT")), It.IsAny<Dictionary<string, string>>()), Times.Once);
 		Assert.AreEqual(_animals.Count, actual.Count);
 		Assert.AreEqual(_animals[0].Name, actual[0].Name);
 		Assert.AreEqual(_animals[1].Description, actual[1].Description);
